@@ -10,36 +10,47 @@ use Illuminate\Http\Request;
 class ReminderController extends Controller
 {
     /**
-     * List all pending reminders for the authenticated user.
+     * List all pending reminders with pagination.
      */
     public function index(Request $request)
     {
-        $reminders = Reminder::whereHas('car', function ($query) use ($request) {
-            $query->where('user_id', $request->user()->id);
+        $query = Reminder::whereHas('car', function ($q) use ($request) {
+            $q->where('user_id', $request->user()->id);
         })
             ->with(['car', 'serviceType'])
             ->where('status', 'pending')
-            ->orderBy('due_date', 'asc')
-            ->get();
+            ->orderBy('due_date', 'asc');
 
-        return response()->json($reminders);
+        // Filter by car
+        if ($request->has('car_id') && $request->car_id) {
+            $query->where('car_id', $request->car_id);
+        }
+
+        if ($request->has('no_paginate')) {
+            return response()->json($query->get());
+        }
+
+        return response()->json($query->paginate($request->get('per_page', 15)));
     }
 
     /**
-     * List overdue reminders for the authenticated user.
+     * List overdue reminders with pagination.
      */
     public function overdue(Request $request)
     {
-        $reminders = Reminder::whereHas('car', function ($query) use ($request) {
-            $query->where('user_id', $request->user()->id);
+        $query = Reminder::whereHas('car', function ($q) use ($request) {
+            $q->where('user_id', $request->user()->id);
         })
             ->with(['car', 'serviceType'])
             ->where('status', 'pending')
             ->where('due_date', '<', now())
-            ->orderBy('due_date', 'asc')
-            ->get();
+            ->orderBy('due_date', 'asc');
 
-        return response()->json($reminders);
+        if ($request->has('no_paginate')) {
+            return response()->json($query->get());
+        }
+
+        return response()->json($query->paginate($request->get('per_page', 15)));
     }
 
     /**

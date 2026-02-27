@@ -15,20 +15,51 @@ use Illuminate\Support\Facades\Log;
 class ServiceRecordController extends Controller
 {
     /**
-     * List all service records for the authenticated user.
+     * List all service records with optional filters and pagination.
      */
     public function index(Request $request)
     {
         $user = $request->user();
 
-        $serviceRecords = ServiceRecord::whereHas('car', function ($query) use ($user) {
-            $query->where('user_id', $user->id);
-        })
-            ->with(['car', 'serviceType'])
-            ->latest()
-            ->get();
+        $query = ServiceRecord::whereHas('car', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->with(['car', 'serviceType']);
 
-        return response()->json($serviceRecords);
+        // Filter by car
+        if ($request->has('car_id') && $request->car_id) {
+            $query->where('car_id', $request->car_id);
+        }
+
+        // Filter by service type
+        if ($request->has('service_type_id') && $request->service_type_id) {
+            $query->where('service_type_id', $request->service_type_id);
+        }
+
+        // Filter by date range
+        if ($request->has('date_from') && $request->date_from) {
+            $query->where('service_date', '>=', $request->date_from);
+        }
+        if ($request->has('date_to') && $request->date_to) {
+            $query->where('service_date', '<=', $request->date_to);
+        }
+
+        // Search by notes or service provider
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('notes', 'like', "%{$search}%")
+                    ->orWhere('service_provider', 'like', "%{$search}%");
+            });
+        }
+
+        $query->latest('service_date');
+
+        // Paginate or return all
+        if ($request->has('no_paginate')) {
+            return response()->json($query->get());
+        }
+
+        return response()->json($query->paginate($request->get('per_page', 15)));
     }
 
     /**
@@ -138,17 +169,14 @@ class ServiceRecordController extends Controller
 
     /**
      * Create or update a reminder for a car's service type.
-     * Deletes any existing pending reminder for the same service type and creates a new one.
      */
     private function createOrUpdateReminder($carId, $serviceTypeId, $dueDate, $dueMileage)
     {
-        // Delete old pending reminders for the same service type
         Reminder::where('car_id', $carId)
             ->where('service_type_id', $serviceTypeId)
             ->where('status', 'pending')
             ->delete();
 
-        // Create a new reminder
         Reminder::create([
             'car_id' => $carId,
             'service_type_id' => $serviceTypeId,

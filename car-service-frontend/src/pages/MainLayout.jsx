@@ -17,14 +17,15 @@ const MainLayout = () => {
     const { showToast, ToastComponent } = useToast();
 
     useEffect(() => {
-        fetchData();
+        fetchDashboardData();
     }, []);
 
-    const fetchData = async () => {
+    // Fetch non-paginated data for the dashboard stats
+    const fetchDashboardData = async () => {
         try {
             const [carsData, remindersData] = await Promise.all([
-                apiCall('/cars'),
-                apiCall('/reminders')
+                apiCall('/cars?no_paginate=1'),
+                apiCall('/reminders?no_paginate=1')
             ]);
             setCars(carsData);
             setReminders(remindersData);
@@ -52,7 +53,6 @@ const MainLayout = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            {/* Toast Notifications */}
             {ToastComponent}
 
             {/* Header */}
@@ -101,44 +101,29 @@ const MainLayout = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Navigation */}
                 <div className="flex gap-4 mb-8 overflow-x-auto pb-2">
-                    <button
-                        onClick={() => setActiveView('dashboard')}
-                        className={`px-6 py-2 rounded-lg font-semibold whitespace-nowrap ${activeView === 'dashboard'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-100'
-                            }`}
-                    >
-                        Dashboard
-                    </button>
-                    <button
-                        onClick={() => setActiveView('cars')}
-                        className={`px-6 py-2 rounded-lg font-semibold whitespace-nowrap ${activeView === 'cars'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-100'
-                            }`}
-                    >
-                        My Cars
-                    </button>
-                    <button
-                        onClick={() => setActiveView('reminders')}
-                        className={`px-6 py-2 rounded-lg font-semibold whitespace-nowrap ${activeView === 'reminders'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-white text-gray-700 hover:bg-gray-100'
-                            }`}
-                    >
-                        Reminders
-                    </button>
+                    {['dashboard', 'cars', 'reminders'].map(view => (
+                        <button
+                            key={view}
+                            onClick={() => setActiveView(view)}
+                            className={`px-6 py-2 rounded-lg font-semibold whitespace-nowrap transition ${activeView === view
+                                    ? 'bg-blue-600 text-white'
+                                    : 'bg-white text-gray-700 hover:bg-gray-100'
+                                }`}
+                        >
+                            {view === 'dashboard' ? 'Dashboard' : view === 'cars' ? 'My Cars' : 'Reminders'}
+                        </button>
+                    ))}
                 </div>
 
                 {/* Content */}
                 {activeView === 'dashboard' && (
-                    <DashboardPage cars={cars} reminders={reminders} onRefresh={fetchData} />
+                    <DashboardPage cars={cars} reminders={reminders} />
                 )}
                 {activeView === 'cars' && (
-                    <CarsPage cars={cars} onRefresh={fetchData} onToast={showToast} />
+                    <CarsPage onRefresh={fetchDashboardData} onToast={showToast} />
                 )}
                 {activeView === 'reminders' && (
-                    <RemindersPage reminders={reminders} onRefresh={fetchData} onToast={showToast} />
+                    <RemindersPage onRefresh={fetchDashboardData} onToast={showToast} />
                 )}
             </div>
         </div>

@@ -1,15 +1,57 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar } from 'lucide-react';
+import { apiCall } from '../services/api';
 import { parseLocalDate } from '../utils/dateUtils';
 import ReminderCard from '../components/ReminderCard';
+import Pagination from '../components/Pagination';
 
-const RemindersPage = ({ reminders, onRefresh, onToast }) => {
+const RemindersPage = ({ onRefresh, onToast }) => {
+    const [reminders, setReminders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [pagination, setPagination] = useState(null);
+
+    const fetchReminders = useCallback(async () => {
+        setLoading(true);
+        try {
+            const data = await apiCall(`/reminders?page=${page}`);
+            setReminders(data.data);
+            setPagination({
+                currentPage: data.current_page,
+                lastPage: data.last_page,
+                total: data.total,
+                perPage: data.per_page
+            });
+        } catch (error) {
+            console.error('Failed to fetch reminders:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [page]);
+
+    useEffect(() => {
+        fetchReminders();
+    }, [fetchReminders]);
+
+    const handleRefresh = () => {
+        fetchReminders();
+        onRefresh();
+    };
+
     const overdueReminders = reminders.filter(r =>
         r.due_date && parseLocalDate(r.due_date) < new Date()
     );
     const upcomingReminders = reminders.filter(r =>
         r.due_date && parseLocalDate(r.due_date) >= new Date()
     );
+
+    if (loading) {
+        return (
+            <div className="flex justify-center py-12">
+                <Calendar className="w-12 h-12 text-blue-600 animate-pulse" />
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -18,7 +60,7 @@ const RemindersPage = ({ reminders, onRefresh, onToast }) => {
                     <h2 className="text-2xl font-bold text-red-600 mb-4">Overdue Services</h2>
                     <div className="space-y-4">
                         {overdueReminders.map(reminder => (
-                            <ReminderCard key={reminder.id} reminder={reminder} isOverdue={true} onRefresh={onRefresh} onToast={onToast} />
+                            <ReminderCard key={reminder.id} reminder={reminder} isOverdue={true} onRefresh={handleRefresh} onToast={onToast} />
                         ))}
                     </div>
                 </div>
@@ -29,7 +71,7 @@ const RemindersPage = ({ reminders, onRefresh, onToast }) => {
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Upcoming Services</h2>
                     <div className="space-y-4">
                         {upcomingReminders.map(reminder => (
-                            <ReminderCard key={reminder.id} reminder={reminder} isOverdue={false} onRefresh={onRefresh} onToast={onToast} />
+                            <ReminderCard key={reminder.id} reminder={reminder} isOverdue={false} onRefresh={handleRefresh} onToast={onToast} />
                         ))}
                     </div>
                 </div>
@@ -52,6 +94,16 @@ const RemindersPage = ({ reminders, onRefresh, onToast }) => {
                         </ol>
                     </div>
                 </div>
+            )}
+
+            {pagination && (
+                <Pagination
+                    currentPage={pagination.currentPage}
+                    lastPage={pagination.lastPage}
+                    total={pagination.total}
+                    perPage={pagination.perPage}
+                    onPageChange={setPage}
+                />
             )}
         </div>
     );

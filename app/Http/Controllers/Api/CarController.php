@@ -11,13 +11,33 @@ use Illuminate\Http\Request;
 class CarController extends Controller
 {
     /**
-     * List all cars for the authenticated user.
+     * List all cars for the authenticated user with optional search and pagination.
      */
     public function index(Request $request)
     {
-        $cars = $request->user()->cars()->with(['serviceRecords', 'reminders'])->get();
+        $query = $request->user()->cars()->with(['serviceRecords', 'reminders']);
 
-        return response()->json($cars);
+        // Search by brand, model, or plate number
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('brand', 'like', "%{$search}%")
+                    ->orWhere('model', 'like', "%{$search}%")
+                    ->orWhere('plate_number', 'like', "%{$search}%");
+            });
+        }
+
+        // Sort
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortDir = $request->get('sort_dir', 'desc');
+        $query->orderBy($sortBy, $sortDir);
+
+        // Paginate (default 12 per page) or return all if no_paginate is set
+        if ($request->has('no_paginate')) {
+            return response()->json($query->get());
+        }
+
+        return response()->json($query->paginate($request->get('per_page', 12)));
     }
 
     /**
