@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import InstallPWA from './components/InstallPWA';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import MainLayout from './pages/MainLayout';
 
 const AuthContent = ({ authView, setAuthView }) => {
@@ -21,10 +23,21 @@ const AuthContent = ({ authView, setAuthView }) => {
   }
 
   if (!user) {
-    if (authView === 'register') {
-      return <RegisterPage onSwitchToLogin={() => setAuthView('login')} />;
+    switch (authView) {
+      case 'register':
+        return <RegisterPage onSwitchToLogin={() => setAuthView('login')} />;
+      case 'forgot':
+        return <ForgotPasswordPage onSwitchToLogin={() => setAuthView('login')} />;
+      case 'reset':
+        return <ResetPasswordPage onSwitchToLogin={() => setAuthView('login')} />;
+      default:
+        return (
+          <LoginPage
+            onSwitchToRegister={() => setAuthView('register')}
+            onSwitchToForgot={() => setAuthView('forgot')}
+          />
+        );
     }
-    return <LoginPage onSwitchToRegister={() => setAuthView('register')} />;
   }
 
   return <MainLayout />;

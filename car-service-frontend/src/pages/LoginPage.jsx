@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Car } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const LoginPage = ({ onSwitchToRegister }) => {
+const LoginPage = ({ onSwitchToRegister, onSwitchToForgot }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -66,6 +66,17 @@ const LoginPage = ({ onSwitchToRegister }) => {
                             placeholder="••••••••"
                         />
                     </div>
+
+                    {onSwitchToForgot && (
+                        <div className="text-right mb-4 -mt-2">
+                            <button
+                                onClick={onSwitchToForgot}
+                                className="text-sm text-blue-600 hover:underline"
+                            >
+                                Forgot Password?
+                            </button>
+                        </div>
+                    )}
 
                     <button
                         onClick={handleSubmit}

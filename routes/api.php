@@ -7,16 +7,29 @@ use App\Http\Controllers\Api\CarController;
 use App\Http\Controllers\Api\ServiceRecordController;
 use App\Http\Controllers\Api\ServiceTypeController;
 use App\Http\Controllers\Api\ReminderController;
+use App\Http\Controllers\Api\PasswordResetController;
 
-// Public routes
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+// Public routes with rate limiting
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/login', [AuthController::class, 'login']);
+});
+
+Route::middleware('throttle:3,5')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+});
+
+// Password reset (public, rate limited)
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLink']);
+    Route::post('/reset-password', [PasswordResetController::class, 'resetPassword']);
+});
 
 // Protected routes
 Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::put('/user/password', [AuthController::class, 'changePassword']);
 
     // Cars
     Route::apiResource('cars', CarController::class);
