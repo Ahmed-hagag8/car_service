@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './App.css';
 import { Car } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
