@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ServiceRecordController;
 use App\Http\Controllers\Api\ServiceTypeController;
 use App\Http\Controllers\Api\ReminderController;
 use App\Http\Controllers\Api\PasswordResetController;
+use App\Http\Controllers\Api\DashboardController;
 
 // Public routes with rate limiting
 Route::middleware('throttle:5,1')->group(function () {
@@ -47,4 +48,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('reminders', [ReminderController::class, 'index']);
     Route::get('reminders/overdue', [ReminderController::class, 'overdue']);
     Route::put('reminders/{id}', [ReminderController::class, 'update']);
+
+    // Dashboard & Export
+    Route::get('dashboard/charts', [DashboardController::class, 'chartData']);
+    Route::get('service-records/export/csv', [DashboardController::class, 'exportCsv']);
 });
