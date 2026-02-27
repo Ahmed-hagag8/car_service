@@ -3,7 +3,7 @@ import { Car, Plus } from 'lucide-react';
 import CarCard from '../components/CarCard';
 import AddCarForm from '../components/AddCarForm';
 
-const CarsPage = ({ cars, onRefresh }) => {
+const CarsPage = ({ cars, onRefresh, onToast }) => {
     const [showAddForm, setShowAddForm] = useState(false);
 
     return (
@@ -20,12 +20,19 @@ const CarsPage = ({ cars, onRefresh }) => {
             </div>
 
             {showAddForm && (
-                <AddCarForm onClose={() => setShowAddForm(false)} onSuccess={() => { setShowAddForm(false); onRefresh(); }} />
+                <AddCarForm
+                    onClose={() => setShowAddForm(false)}
+                    onSuccess={() => {
+                        setShowAddForm(false);
+                        onToast('Car added successfully');
+                        onRefresh();
+                    }}
+                />
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {cars.map(car => (
-                    <CarCard key={car.id} car={car} onRefresh={onRefresh} />
+                    <CarCard key={car.id} car={car} onRefresh={onRefresh} onToast={onToast} />
                 ))}
             </div>
 

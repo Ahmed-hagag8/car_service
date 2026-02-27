@@ -3,7 +3,7 @@ import { Calendar } from 'lucide-react';
 import { parseLocalDate } from '../utils/dateUtils';
 import ReminderCard from '../components/ReminderCard';
 
-const RemindersPage = ({ reminders, onRefresh }) => {
+const RemindersPage = ({ reminders, onRefresh, onToast }) => {
     const overdueReminders = reminders.filter(r =>
         r.due_date && parseLocalDate(r.due_date) < new Date()
     );
@@ -18,7 +18,7 @@ const RemindersPage = ({ reminders, onRefresh }) => {
                     <h2 className="text-2xl font-bold text-red-600 mb-4">Overdue Services</h2>
                     <div className="space-y-4">
                         {overdueReminders.map(reminder => (
-                            <ReminderCard key={reminder.id} reminder={reminder} isOverdue={true} onRefresh={onRefresh} />
+                            <ReminderCard key={reminder.id} reminder={reminder} isOverdue={true} onRefresh={onRefresh} onToast={onToast} />
                         ))}
                     </div>
                 </div>
@@ -29,7 +29,7 @@ const RemindersPage = ({ reminders, onRefresh }) => {
                     <h2 className="text-2xl font-bold text-gray-800 mb-4">Upcoming Services</h2>
                     <div className="space-y-4">
                         {upcomingReminders.map(reminder => (
-                            <ReminderCard key={reminder.id} reminder={reminder} isOverdue={false} onRefresh={onRefresh} />
+                            <ReminderCard key={reminder.id} reminder={reminder} isOverdue={false} onRefresh={onRefresh} onToast={onToast} />
                         ))}
                     </div>
                 </div>

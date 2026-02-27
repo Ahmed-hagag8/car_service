@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
-import { Calendar, AlertCircle } from 'lucide-react';
+import { Calendar, AlertCircle, X } from 'lucide-react';
 import { apiCall } from '../services/api';
 import { parseLocalDate, getDaysRemaining, formatDaysRemaining } from '../utils/dateUtils';
 
-const ReminderCard = ({ reminder, isOverdue, onRefresh }) => {
+const ReminderCard = ({ reminder, isOverdue, onRefresh, onToast }) => {
     const [loading, setLoading] = useState(false);
 
-    const handleMarkComplete = async () => {
+    const handleUpdateStatus = async (status) => {
         setLoading(true);
         try {
             await apiCall(`/reminders/${reminder.id}`, {
                 method: 'PUT',
-                body: JSON.stringify({ status: 'completed' })
+                body: JSON.stringify({ status })
             });
+            onToast(status === 'completed' ? 'Reminder marked as complete' : 'Reminder dismissed');
             onRefresh();
         } catch (error) {
-            console.error('Failed to update reminder:', error);
+            onToast(error.message, 'error');
         } finally {
             setLoading(false);
         }
@@ -55,13 +56,22 @@ const ReminderCard = ({ reminder, isOverdue, onRefresh }) => {
                     </div>
                 </div>
 
-                <button
-                    onClick={handleMarkComplete}
-                    disabled={loading}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50"
-                >
-                    {loading ? 'Updating...' : 'Mark Complete'}
-                </button>
+                <div className="flex flex-col gap-2">
+                    <button
+                        onClick={() => handleUpdateStatus('completed')}
+                        disabled={loading}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 text-sm font-semibold"
+                    >
+                        {loading ? 'Updating...' : 'Complete'}
+                    </button>
+                    <button
+                        onClick={() => handleUpdateStatus('dismissed')}
+                        disabled={loading}
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 text-sm font-semibold"
+                    >
+                        Dismiss
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Car, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { apiCall } from '../services/api';
+import { useToast } from '../components/Toast';
 import DashboardPage from './DashboardPage';
 import CarsPage from './CarsPage';
 import RemindersPage from './RemindersPage';
@@ -13,6 +14,7 @@ const MainLayout = () => {
     const [activeView, setActiveView] = useState('dashboard');
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const { user, logout } = useAuth();
+    const { showToast, ToastComponent } = useToast();
 
     useEffect(() => {
         fetchData();
@@ -50,6 +52,9 @@ const MainLayout = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            {/* Toast Notifications */}
+            {ToastComponent}
+
             {/* Header */}
             <header className="bg-white shadow-sm border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -130,10 +135,10 @@ const MainLayout = () => {
                     <DashboardPage cars={cars} reminders={reminders} onRefresh={fetchData} />
                 )}
                 {activeView === 'cars' && (
-                    <CarsPage cars={cars} onRefresh={fetchData} />
+                    <CarsPage cars={cars} onRefresh={fetchData} onToast={showToast} />
                 )}
                 {activeView === 'reminders' && (
-                    <RemindersPage reminders={reminders} onRefresh={fetchData} />
+                    <RemindersPage reminders={reminders} onRefresh={fetchData} onToast={showToast} />
                 )}
             </div>
         </div>
