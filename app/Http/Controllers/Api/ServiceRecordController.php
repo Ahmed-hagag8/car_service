@@ -78,6 +78,12 @@ class ServiceRecordController extends Controller
         $validated['next_due_date'] = $nextDueDate;
         $validated['next_due_mileage'] = $nextDueMileage;
 
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $validated['image_path'] = $request->file('image')->store('service-receipts', 'public');
+        }
+        unset($validated['image']);
+
         $serviceRecord = ServiceRecord::create($validated);
         $car->update(['current_mileage' => $validated['mileage_at_service']]);
 

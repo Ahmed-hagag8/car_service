@@ -1,9 +1,152 @@
+/* ===== CSS Variables (Light + Dark) ===== */
+:root {
+  --bg-primary: #f9fafb;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f3f4f6;
+  --bg-gradient-from: #3b82f6;
+  --bg-gradient-to: #7c3aed;
+
+  --text-primary: #1f2937;
+  --text-secondary: #4b5563;
+  --text-tertiary: #6b7280;
+  --text-muted: #9ca3af;
+
+  --border-primary: #e5e7eb;
+  --border-secondary: #d1d5db;
+
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --green-600: #059669;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+
+  --card-hover: #f9fafb;
+
+  --toast-bg: #1f2937;
+}
+
+:root.dark {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-gradient-from: #1e3a5f;
+  --bg-gradient-to: #4c1d95;
+
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-muted: #64748b;
+
+  --border-primary: #334155;
+  --border-secondary: #475569;
+
+  --blue-600: #3b82f6;
+  --blue-700: #2563eb;
+  --green-600: #10b981;
+  --red-500: #f87171;
+  --red-600: #ef4444;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5);
+
+  --input-bg: #1e293b;
+  --input-border: #475569;
+
+  --card-hover: #334155;
+
+  --toast-bg: #334155;
+}
+
+/* ===== Global Overrides ===== */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ===== Component-Level Dark Mode ===== */
+
+/* Cards and containers */
+.bg-white {
+  background-color: var(--bg-secondary) !important;
+}
+
+.bg-gray-50 {
+  background-color: var(--bg-primary) !important;
+}
+
+/* Text */
+.text-gray-800 {
+  color: var(--text-primary) !important;
+}
+
+.text-gray-700 {
+  color: var(--text-secondary) !important;
+}
+
+.text-gray-600 {
+  color: var(--text-tertiary) !important;
+}
+
+.text-gray-500 {
+  color: var(--text-muted) !important;
+}
+
+/* Borders */
+.border-gray-200,
+.border-gray-300 {
+  border-color: var(--border-primary) !important;
+}
+
+/* Inputs */
+input,
+textarea,
+select {
+  background-color: var(--input-bg) !important;
+  border-color: var(--input-border) !important;
+  color: var(--text-primary) !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted) !important;
+}
+
+/* Shadows */
+.shadow-sm {
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.shadow-2xl {
+  box-shadow: var(--shadow-xl) !important;
+}
+
+/* Hover states */
+.hover\:bg-gray-100:hover {
+  background-color: var(--card-hover) !important;
+}
+
+/* Gradient backgrounds (login/register) */
+.bg-gradient-to-br {
+  background: linear-gradient(to bottom right, var(--bg-gradient-from), var(--bg-gradient-to)) !important;
+}
+
 /* Toast animation */
 @keyframes slide-in {
   from {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;

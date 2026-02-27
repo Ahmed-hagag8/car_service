@@ -20,6 +20,8 @@ class ServiceRecordResource extends JsonResource
             'service_provider' => $this->service_provider,
             'next_due_date' => $this->next_due_date,
             'next_due_mileage' => $this->next_due_mileage,
+            'image_path' => $this->image_path,
+            'image_url' => $this->image_path ? url('storage/' . $this->image_path) : null,
             'created_at' => $this->created_at->toISOString(),
             'car' => new CarResource($this->whenLoaded('car')),
             'service_type' => $this->whenLoaded('serviceType'),

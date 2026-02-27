@@ -17,7 +17,8 @@ class ServiceRecord extends Model
         'notes',
         'service_provider',
         'next_due_date',
-        'next_due_mileage'
+        'next_due_mileage',
+        'image_path'
     ];
 
     protected $casts = [

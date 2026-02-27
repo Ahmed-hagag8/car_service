@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Car, LogOut, Menu, X, Settings } from 'lucide-react';
+import { Car, LogOut, Menu, X, Settings, Moon, Sun } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { apiCall } from '../services/api';
 import { useToast } from '../components/Toast';
+import { useTheme } from '../hooks/useTheme';
 import DashboardPage from './DashboardPage';
 import CarsPage from './CarsPage';
 import RemindersPage from './RemindersPage';
@@ -23,6 +24,7 @@ const MainLayout = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const { user, logout } = useAuth();
     const { showToast, ToastComponent } = useToast();
+    const { darkMode, toggleTheme } = useTheme();
 
     useEffect(() => {
         fetchDashboardData();
@@ -34,7 +36,6 @@ const MainLayout = () => {
                 apiCall('/cars?no_paginate=1'),
                 apiCall('/reminders?no_paginate=1')
             ]);
-            // API Resources wrap in data key
             setCars(carsData.data || carsData);
             setReminders(remindersData.data || remindersData);
         } catch (error) {
@@ -68,6 +69,13 @@ const MainLayout = () => {
                         </div>
 
                         <div className="hidden md:flex items-center gap-4">
+                            <button
+                                onClick={toggleTheme}
+                                className="p-2 rounded-lg hover:bg-gray-100 transition"
+                                title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                            >
+                                {darkMode ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-gray-600" />}
+                            </button>
                             <span className="text-gray-600">Welcome, {user?.name}!</span>
                             <button
                                 onClick={logout}
@@ -78,12 +86,14 @@ const MainLayout = () => {
                             </button>
                         </div>
 
-                        <button
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="md:hidden"
-                        >
-                            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                        </button>
+                        <div className="flex items-center gap-2 md:hidden">
+                            <button onClick={toggleTheme} className="p-2">
+                                {darkMode ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-gray-600" />}
+                            </button>
+                            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                            </button>
+                        </div>
                     </div>
 
                     {mobileMenuOpen && (
@@ -102,7 +112,6 @@ const MainLayout = () => {
             </header>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Navigation */}
                 <div className="flex gap-4 mb-8 overflow-x-auto pb-2">
                     {NAV_ITEMS.map(item => (
                         <button

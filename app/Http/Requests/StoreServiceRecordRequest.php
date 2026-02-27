@@ -27,6 +27,7 @@ class StoreServiceRecordRequest extends FormRequest
             'cost' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
             'service_provider' => 'nullable|string|max:255',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:5120',
         ];
     }
 
