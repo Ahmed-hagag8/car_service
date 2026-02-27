@@ -8,12 +8,14 @@ use Illuminate\Http\Request;
 
 class ServiceTypeController extends Controller
 {
-    // عرض كل أنواع الخدمات
+    /**
+     * List all service types, optionally grouped by category.
+     */
     public function index(Request $request)
     {
         $serviceTypes = ServiceType::all();
 
-        // لو عايز تصنفهم حسب الـ category
+        // Group by category if requested
         if ($request->has('grouped')) {
             $serviceTypes = ServiceType::all()->groupBy('category');
         }

@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 class ServiceRecord extends Model
 {
     use HasFactory;
-    // app/Models/ServiceRecord.php
     protected $fillable = [
         'car_id',
         'service_type_id',

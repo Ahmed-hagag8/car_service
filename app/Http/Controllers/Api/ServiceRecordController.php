@@ -3,16 +3,20 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreServiceRecordRequest;
+use App\Http\Requests\UpdateServiceRecordRequest;
 use App\Models\ServiceRecord;
 use App\Models\Car;
 use App\Models\Reminder;
+use App\Models\ServiceType;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class ServiceRecordController extends Controller
 {
-    // عرض كل الخدمات
+    /**
+     * List all service records for the authenticated user.
+     */
     public function index(Request $request)
     {
         $user = $request->user();
@@ -27,67 +31,41 @@ class ServiceRecordController extends Controller
         return response()->json($serviceRecords);
     }
 
-    // إضافة خدمة جديدة
-    public function store(Request $request)
+    /**
+     * Store a new service record and auto-create a reminder.
+     */
+    public function store(StoreServiceRecordRequest $request)
     {
-        $validated = $request->validate([
-            'car_id' => 'required|exists:cars,id',
-            'service_type_id' => 'required|exists:service_types,id',
-            'service_date' => 'required|date',
-            'mileage_at_service' => 'required|integer|min:0',
-            'cost' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string',
-            'service_provider' => 'nullable|string|max:255',
-        ]);
+        $validated = $request->validated();
 
-        // التأكد إن العربية بتاعة المستخدم
+        // Verify the car belongs to the authenticated user
         $car = $request->user()->cars()->findOrFail($validated['car_id']);
 
-        // جلب نوع الخدمة
-        $serviceType = \App\Models\ServiceType::find($validated['service_type_id']);
+        // Get the service type for logging
+        $serviceType = ServiceType::find($validated['service_type_id']);
 
-        // الـ reminder يستخدم نفس التاريخ والمسافة اللي المستخدم دخلها في الفورم
+        // Use the date and mileage entered by the user for the reminder
         $nextDueDate = $validated['service_date'];
         $nextDueMileage = $validated['mileage_at_service'];
 
-        Log::info('Service Type:', [
-            'id' => $serviceType->id,
-            'name' => $serviceType->name,
-            'interval_days' => $serviceType->recommended_interval_days,
-            'interval_km' => $serviceType->recommended_interval_km
-        ]);
-
-        Log::info('Calculated dates:', [
+        Log::info('Creating service record', [
+            'service_type' => $serviceType->name,
             'next_due_date' => $nextDueDate,
-            'next_due_mileage' => $nextDueMileage
+            'next_due_mileage' => $nextDueMileage,
         ]);
-
 
         $validated['next_due_date'] = $nextDueDate;
         $validated['next_due_mileage'] = $nextDueMileage;
 
-        // إنشاء Service Record
+        // Create the service record
         $serviceRecord = ServiceRecord::create($validated);
 
-        // تحديث الـ mileage بتاع العربية
+        // Update the car's current mileage
         $car->update(['current_mileage' => $validated['mileage_at_service']]);
 
-        // إنشاء أو تحديث الـ reminder
+        // Create or update the reminder using the helper method
         if ($nextDueDate || $nextDueMileage) {
-            // امسح الـ reminder القديم لنفس النوع (لو موجود)
-            Reminder::where('car_id', $car->id)
-                ->where('service_type_id', $validated['service_type_id'])
-                ->where('status', 'pending')
-                ->delete();
-
-            // اعمل reminder جديد
-            Reminder::create([
-                'car_id' => $car->id,
-                'service_type_id' => $validated['service_type_id'],
-                'due_date' => $nextDueDate,
-                'due_mileage' => $nextDueMileage,
-                'status' => 'pending'
-            ]);
+            $this->createOrUpdateReminder($car->id, $validated['service_type_id'], $nextDueDate, $nextDueMileage);
         }
 
         return response()->json([
@@ -96,26 +74,9 @@ class ServiceRecordController extends Controller
         ], 201);
     }
 
-    // Helper function
-    private function createOrUpdateReminder($carId, $serviceTypeId, $dueDate, $dueMileage)
-    {
-        // امسح الـ reminders القديمة لنفس النوع
-        Reminder::where('car_id', $carId)
-            ->where('service_type_id', $serviceTypeId)
-            ->where('status', 'pending')
-            ->delete();
-
-        // اعمل reminder جديد
-        Reminder::create([
-            'car_id' => $carId,
-            'service_type_id' => $serviceTypeId,
-            'due_date' => $dueDate,
-            'due_mileage' => $dueMileage,
-            'status' => 'pending'
-        ]);
-    }
-
-    // عرض خدمة معينة
+    /**
+     * Show a single service record.
+     */
     public function show(Request $request, $id)
     {
         $serviceRecord = ServiceRecord::whereHas('car', function ($query) use ($request) {
@@ -127,22 +88,16 @@ class ServiceRecordController extends Controller
         return response()->json($serviceRecord);
     }
 
-    // تحديث خدمة
-    public function update(Request $request, $id)
+    /**
+     * Update a service record.
+     */
+    public function update(UpdateServiceRecordRequest $request, $id)
     {
         $serviceRecord = ServiceRecord::whereHas('car', function ($query) use ($request) {
             $query->where('user_id', $request->user()->id);
         })->findOrFail($id);
 
-        $validated = $request->validate([
-            'service_date' => 'sometimes|date',
-            'mileage_at_service' => 'sometimes|integer|min:0',
-            'cost' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string',
-            'service_provider' => 'nullable|string|max:255',
-        ]);
-
-        $serviceRecord->update($validated);
+        $serviceRecord->update($request->validated());
 
         return response()->json([
             'message' => 'Service record updated successfully',
@@ -150,7 +105,9 @@ class ServiceRecordController extends Controller
         ]);
     }
 
-    // حذف خدمة
+    /**
+     * Delete a service record.
+     */
     public function destroy(Request $request, $id)
     {
         $serviceRecord = ServiceRecord::whereHas('car', function ($query) use ($request) {
@@ -164,7 +121,9 @@ class ServiceRecordController extends Controller
         ]);
     }
 
-    // عرض كل الخدمات لعربية معينة
+    /**
+     * List all service records for a specific car.
+     */
     public function getCarServices(Request $request, $carId)
     {
         $car = $request->user()->cars()->findOrFail($carId);
@@ -177,6 +136,25 @@ class ServiceRecordController extends Controller
         return response()->json($services);
     }
 
-    // Helper function لإنشاء أو تحديث الـ reminder
+    /**
+     * Create or update a reminder for a car's service type.
+     * Deletes any existing pending reminder for the same service type and creates a new one.
+     */
+    private function createOrUpdateReminder($carId, $serviceTypeId, $dueDate, $dueMileage)
+    {
+        // Delete old pending reminders for the same service type
+        Reminder::where('car_id', $carId)
+            ->where('service_type_id', $serviceTypeId)
+            ->where('status', 'pending')
+            ->delete();
 
+        // Create a new reminder
+        Reminder::create([
+            'car_id' => $carId,
+            'service_type_id' => $serviceTypeId,
+            'due_date' => $dueDate,
+            'due_mileage' => $dueMileage,
+            'status' => 'pending'
+        ]);
+    }
 }

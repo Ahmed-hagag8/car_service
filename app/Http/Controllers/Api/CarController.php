@@ -3,33 +3,29 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreCarRequest;
+use App\Http\Requests\UpdateCarRequest;
 use App\Models\Car;
 use Illuminate\Http\Request;
 
 class CarController extends Controller
 {
-    // عرض كل العربيات بتاعة المستخدم
+    /**
+     * List all cars for the authenticated user.
+     */
     public function index(Request $request)
     {
         $cars = $request->user()->cars()->with(['serviceRecords', 'reminders'])->get();
-        
+
         return response()->json($cars);
     }
 
-    // إضافة عربية جديدة
-    public function store(Request $request)
+    /**
+     * Store a new car.
+     */
+    public function store(StoreCarRequest $request)
     {
-        $validated = $request->validate([
-            'brand' => 'required|string|max:255',
-            'model' => 'required|string|max:255',
-            'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
-            'current_mileage' => 'required|integer|min:0',
-            'plate_number' => 'nullable|string|max:255',
-            'vin' => 'nullable|string|max:17',
-            'color' => 'nullable|string|max:255',
-        ]);
-
-        $car = $request->user()->cars()->create($validated);
+        $car = $request->user()->cars()->create($request->validated());
 
         return response()->json([
             'message' => 'Car added successfully',
@@ -37,7 +33,9 @@ class CarController extends Controller
         ], 201);
     }
 
-    // عرض عربية واحدة بالتفاصيل
+    /**
+     * Show a single car with details.
+     */
     public function show(Request $request, $id)
     {
         $car = $request->user()->cars()->with(['serviceRecords.serviceType', 'reminders'])->findOrFail($id);
@@ -45,22 +43,13 @@ class CarController extends Controller
         return response()->json($car);
     }
 
-    // تحديث بيانات عربية
-    public function update(Request $request, $id)
+    /**
+     * Update a car's details.
+     */
+    public function update(UpdateCarRequest $request, $id)
     {
         $car = $request->user()->cars()->findOrFail($id);
-
-        $validated = $request->validate([
-            'brand' => 'sometimes|string|max:255',
-            'model' => 'sometimes|string|max:255',
-            'year' => 'sometimes|integer|min:1900|max:' . (date('Y') + 1),
-            'current_mileage' => 'sometimes|integer|min:0',
-            'plate_number' => 'nullable|string|max:255',
-            'vin' => 'nullable|string|max:17',
-            'color' => 'nullable|string|max:255',
-        ]);
-
-        $car->update($validated);
+        $car->update($request->validated());
 
         return response()->json([
             'message' => 'Car updated successfully',
@@ -68,7 +57,9 @@ class CarController extends Controller
         ]);
     }
 
-    // حذف عربية
+    /**
+     * Delete a car.
+     */
     public function destroy(Request $request, $id)
     {
         $car = $request->user()->cars()->findOrFail($id);
@@ -79,7 +70,9 @@ class CarController extends Controller
         ]);
     }
 
-    // إحصائيات العربية
+    /**
+     * Get statistics for a specific car.
+     */
     public function stats(Request $request, $id)
     {
         $car = $request->user()->cars()->with(['serviceRecords'])->findOrFail($id);
@@ -88,17 +81,17 @@ class CarController extends Controller
         $serviceCount = $car->serviceRecords->count();
         $averageCost = $serviceCount > 0 ? $totalCost / $serviceCount : 0;
 
-        // الخدمات القادمة
+        // Upcoming services
         $upcomingServices = $car->reminders()
             ->where('status', 'pending')
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->where('due_date', '>=', now())
-                      ->orWhereNull('due_date');
+                    ->orWhereNull('due_date');
             })
             ->with('serviceType')
             ->get();
 
-        // الخدمات المتأخرة
+        // Overdue services
         $overdueServices = $car->reminders()
             ->where('status', 'pending')
             ->where('due_date', '<', now())

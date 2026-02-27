@@ -8,10 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class ServiceType extends Model
 {
     use HasFactory;
-    // app/Models/ServiceType.php
     protected $fillable = [
-        'name', 'description', 'recommended_interval_km', 
-        'recommended_interval_days', 'category'
+        'name',
+        'description',
+        'recommended_interval_km',
+        'recommended_interval_days',
+        'category'
     ];
 
     public function serviceRecords()
