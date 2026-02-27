@@ -1,66 +1,128 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🚗 Car Service Manager
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A full-stack web application for tracking car maintenance, service records, and reminders. Built with **Laravel 10** (API) and **React 19** (SPA).
 
-## About Laravel
+## ✨ Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Car Management** — Add, edit, delete cars with details (brand, model, year, mileage, plate, color)
+- **Service Records** — Track maintenance history with cost, provider, notes, and receipt photos
+- **Reminders** — Auto-created reminders for upcoming/overdue services
+- **Dashboard** — Charts (monthly spending, services by type), stats, and CSV export
+- **Dark Mode** — Toggle with persistent preference
+- **Multi-Language** — English + Arabic with RTL support
+- **PWA** — Installable as a mobile app
+- **Notifications** — Browser notifications + email alerts for overdue services
+- **Search & Pagination** — Filter and paginate all data
+- **Secure Auth** — Registration, login, password reset, rate limiting
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🛠️ Tech Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Layer | Technology |
+|-------|-----------|
+| Backend | Laravel 10, Sanctum |
+| Frontend | React 19, Recharts, Lucide Icons |
+| Database | MySQL |
+| Auth | Token-based (Sanctum) |
+| Styling | TailwindCSS v4 |
 
-## Learning Laravel
+## 🚀 Setup
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Prerequisites
+- PHP 8.1+, Composer, Node.js 18+, MySQL
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Backend
+```bash
+cd car_service
+composer install
+cp .env.example .env
+php artisan key:generate
+# Configure database in .env
+php artisan migrate --seed
+php artisan storage:link
+php artisan serve
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Frontend
+```bash
+cd car-service-frontend
+npm install
+# Set API URL in .env (optional)
+# REACT_APP_API_URL=http://localhost:8000/api
+npm start
+```
 
-## Laravel Sponsors
+### Build for Production
+```bash
+cd car-service-frontend
+npm run build
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+## 🔧 Environment Variables
 
-### Premium Partners
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `APP_URL` | Backend URL | `http://localhost:8000` |
+| `FRONTEND_URL` | Frontend URL | `http://localhost:3000` |
+| `CORS_ALLOWED_ORIGINS` | Allowed CORS origins (comma-separated) | `http://localhost:3000` |
+| `REACT_APP_API_URL` | API base URL (frontend) | `http://localhost:8000/api` |
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+## 📡 API Endpoints
 
-## Contributing
+### Auth
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/register` | Register (rate limited: 3/5min) |
+| POST | `/api/login` | Login (rate limited: 5/min) |
+| POST | `/api/logout` | Logout |
+| GET | `/api/user` | Get profile |
+| PUT | `/api/user/profile` | Update profile |
+| PUT | `/api/user/password` | Change password |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Cars
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/cars` | List (search, paginate) |
+| POST | `/api/cars` | Create |
+| GET | `/api/cars/{id}` | Show |
+| PUT | `/api/cars/{id}` | Update |
+| DELETE | `/api/cars/{id}` | Delete |
+| GET | `/api/cars/{id}/stats` | Car statistics |
 
-## Code of Conduct
+### Service Records
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/service-records` | List (filter by car, type, date) |
+| POST | `/api/service-records` | Create (supports image upload) |
+| GET | `/api/service-records/{id}` | Show |
+| PUT | `/api/service-records/{id}` | Update |
+| DELETE | `/api/service-records/{id}` | Delete |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Reminders & Dashboard
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/reminders` | List pending |
+| GET | `/api/reminders/overdue` | List overdue |
+| PUT | `/api/reminders/{id}` | Update status |
+| GET | `/api/dashboard/charts` | Chart data |
+| GET | `/api/service-records/export/csv` | Export CSV |
 
-## Security Vulnerabilities
+## 🧪 Testing
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+php artisan test
+# 28 tests, 45 assertions
+```
 
-## License
+## 📋 Scheduled Commands
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+# Check overdue reminders (runs daily at 8am)
+php artisan reminders:check
+
+# Run scheduler
+php artisan schedule:work
+```
+
+## 📄 License
+
+MIT
