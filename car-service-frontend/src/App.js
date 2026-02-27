@@ -4,6 +4,33 @@ import { Camera, Car, Plus, Calendar, DollarSign, AlertCircle, CheckCircle, Sett
 // API Configuration
 const API_BASE_URL = 'http://localhost:8000/api';
 
+// Parse date string (YYYY-MM-DD) as local date, avoiding timezone shift
+const parseLocalDate = (dateStr) => {
+  if (!dateStr) return null;
+  const [year, month, day] = dateStr.split('T')[0].split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+// Calculate days remaining from now to a date
+const getDaysRemaining = (dateStr) => {
+  if (!dateStr) return null;
+  const dueDate = parseLocalDate(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffTime = dueDate - today;
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
+// Format days remaining as a readable string
+const formatDaysRemaining = (days) => {
+  if (days === null) return 'No date set';
+  if (days === 0) return 'Due today';
+  if (days === 1) return '1 day remaining';
+  if (days > 1) return `${days} days remaining`;
+  if (days === -1) return '1 day overdue';
+  return `${Math.abs(days)} days overdue`;
+};
+
 // Auth Context
 const AuthContext = createContext();
 
@@ -484,10 +511,10 @@ const Dashboard = () => {
 // Dashboard View
 const DashboardView = ({ cars, reminders }) => {
   const overdueReminders = reminders.filter(r =>
-    r.due_date && new Date(r.due_date) < new Date()
+    r.due_date && parseLocalDate(r.due_date) < new Date()
   );
   const upcomingReminders = reminders.filter(r =>
-    r.due_date && new Date(r.due_date) >= new Date()
+    r.due_date && parseLocalDate(r.due_date) >= new Date()
   );
 
   return (
@@ -533,7 +560,7 @@ const DashboardView = ({ cars, reminders }) => {
             {reminders.slice(0, 5).map(reminder => (
               <div key={reminder.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-3">
-                  {reminder.due_date && new Date(reminder.due_date) < new Date() ? (
+                  {reminder.due_date && parseLocalDate(reminder.due_date) < new Date() ? (
                     <AlertCircle className="w-5 h-5 text-red-500" />
                   ) : (
                     <Calendar className="w-5 h-5 text-blue-500" />
@@ -544,8 +571,11 @@ const DashboardView = ({ cars, reminders }) => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-700">
-                    {reminder.due_date ? new Date(reminder.due_date).toLocaleDateString() : 'No date set'}
+                  <p className={`text-sm font-medium ${reminder.due_date && getDaysRemaining(reminder.due_date) < 0 ? 'text-red-600' : 'text-gray-700'}`}>
+                    {reminder.due_date ? formatDaysRemaining(getDaysRemaining(reminder.due_date)) : 'No date set'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {reminder.due_date ? parseLocalDate(reminder.due_date).toLocaleDateString() : ''}
                   </p>
                   <p className="text-xs text-gray-500">
                     {reminder.due_mileage ? `${reminder.due_mileage.toLocaleString()} km` : ''}
@@ -740,7 +770,7 @@ const CarDetailsModal = ({ car, stats, onClose, onRefresh }) => {
                       )}
                     </div>
                     <div className="text-sm text-gray-600 space-y-1">
-                      <p>Date: {new Date(service.service_date).toLocaleDateString()}</p>
+                      <p>Date: {parseLocalDate(service.service_date).toLocaleDateString()}</p>
                       <p>Mileage: {service.mileage_at_service?.toLocaleString()} km</p>
                       {service.service_provider && <p>Provider: {service.service_provider}</p>}
                       {service.notes && <p className="italic">Notes: {service.notes}</p>}
@@ -1046,10 +1076,10 @@ const AddServiceForm = ({ carId, onClose, onSuccess }) => {
 // Reminders View
 const RemindersView = ({ reminders, onRefresh }) => {
   const overdueReminders = reminders.filter(r =>
-    r.due_date && new Date(r.due_date) < new Date()
+    r.due_date && parseLocalDate(r.due_date) < new Date()
   );
   const upcomingReminders = reminders.filter(r =>
-    r.due_date && new Date(r.due_date) >= new Date()
+    r.due_date && parseLocalDate(r.due_date) >= new Date()
   );
 
   return (
@@ -1136,8 +1166,13 @@ const ReminderCard = ({ reminder, isOverdue, onRefresh }) => {
               <span className="font-semibold">Car:</span> {reminder.car?.brand} {reminder.car?.model}
             </p>
             <p className="text-gray-700">
-              <span className="font-semibold">Due Date:</span> {reminder.due_date ? new Date(reminder.due_date).toLocaleDateString() : 'No date set'}
+              <span className="font-semibold">Due Date:</span> {reminder.due_date ? parseLocalDate(reminder.due_date).toLocaleDateString() : 'No date set'}
             </p>
+            {reminder.due_date && (
+              <p className={`font-semibold ${getDaysRemaining(reminder.due_date) < 0 ? 'text-red-600' : getDaysRemaining(reminder.due_date) <= 7 ? 'text-orange-500' : 'text-green-600'}`}>
+                {formatDaysRemaining(getDaysRemaining(reminder.due_date))}
+              </p>
+            )}
             {reminder.due_mileage && (
               <p className="text-gray-700">
                 <span className="font-semibold">Due Mileage:</span> {reminder.due_mileage.toLocaleString()} km

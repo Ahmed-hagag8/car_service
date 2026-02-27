@@ -10,14 +10,20 @@ class ServiceRecord extends Model
     use HasFactory;
     // app/Models/ServiceRecord.php
     protected $fillable = [
-        'car_id', 'service_type_id', 'service_date', 
-        'mileage_at_service', 'cost', 'notes', 
-        'service_provider', 'next_due_date', 'next_due_mileage'
+        'car_id',
+        'service_type_id',
+        'service_date',
+        'mileage_at_service',
+        'cost',
+        'notes',
+        'service_provider',
+        'next_due_date',
+        'next_due_mileage'
     ];
 
     protected $casts = [
-        'service_date' => 'date',
-        'next_due_date' => 'date',
+        'service_date' => 'date:Y-m-d',
+        'next_due_date' => 'date:Y-m-d',
     ];
 
     public function car()
