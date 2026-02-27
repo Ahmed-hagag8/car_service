@@ -16,11 +16,13 @@ class Reminder extends Model
         'due_mileage',
         'status',
         'notified',
+        'last_notified_at',
     ];
 
     protected $casts = [
         'due_date' => 'date:Y-m-d',
         'notified' => 'boolean',
+        'last_notified_at' => 'datetime',
     ];
 
     public function car()

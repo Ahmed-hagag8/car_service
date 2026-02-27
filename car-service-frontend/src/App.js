@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Car } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 import InstallPWA from './components/InstallPWA';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -47,10 +48,12 @@ const App = () => {
   const [authView, setAuthView] = useState('login');
 
   return (
-    <AuthProvider>
-      <InstallPWA />
-      <AuthContent authView={authView} setAuthView={setAuthView} />
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <InstallPWA />
+        <AuthContent authView={authView} setAuthView={setAuthView} />
+      </AuthProvider>
+    </LanguageProvider>
   );
 };
 

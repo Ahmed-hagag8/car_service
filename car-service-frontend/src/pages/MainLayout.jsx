@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Car, LogOut, Menu, X, Settings, Moon, Sun } from 'lucide-react';
+import { Car, LogOut, Menu, X, Settings, Moon, Sun, Globe } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { apiCall } from '../services/api';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../hooks/useTheme';
@@ -8,13 +9,6 @@ import DashboardPage from './DashboardPage';
 import CarsPage from './CarsPage';
 import RemindersPage from './RemindersPage';
 import SettingsPage from './SettingsPage';
-
-const NAV_ITEMS = [
-    { key: 'dashboard', label: 'Dashboard' },
-    { key: 'cars', label: 'My Cars' },
-    { key: 'reminders', label: 'Reminders' },
-    { key: 'settings', label: 'Settings' },
-];
 
 const MainLayout = () => {
     const [cars, setCars] = useState([]);
@@ -25,10 +19,31 @@ const MainLayout = () => {
     const { user, logout } = useAuth();
     const { showToast, ToastComponent } = useToast();
     const { darkMode, toggleTheme } = useTheme();
+    const { t, lang, toggleLanguage } = useLanguage();
 
+    // Request browser notification permission on mount
     useEffect(() => {
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
         fetchDashboardData();
     }, []);
+
+    // Check for overdue reminders and show browser notification
+    useEffect(() => {
+        if (reminders.length > 0 && 'Notification' in window && Notification.permission === 'granted') {
+            const overdueCount = reminders.filter(r =>
+                r.due_date && new Date(r.due_date) < new Date()
+            ).length;
+
+            if (overdueCount > 0) {
+                new Notification('Car Service Manager', {
+                    body: `You have ${overdueCount} overdue service reminder${overdueCount > 1 ? 's' : ''}!`,
+                    icon: '/logo192.png'
+                });
+            }
+        }
+    }, [reminders]);
 
     const fetchDashboardData = async () => {
         try {
@@ -45,12 +60,19 @@ const MainLayout = () => {
         }
     };
 
+    const navItems = [
+        { key: 'dashboard', label: t('dashboard') },
+        { key: 'cars', label: t('my_cars') },
+        { key: 'reminders', label: t('reminders') },
+        { key: 'settings', label: t('settings') },
+    ];
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="text-center">
                     <Car className="w-16 h-16 mx-auto text-blue-600 animate-pulse mb-4" />
-                    <p className="text-gray-600">Loading...</p>
+                    <p className="text-gray-600">{t('loading')}</p>
                 </div>
             </div>
         );
@@ -65,28 +87,39 @@ const MainLayout = () => {
                     <div className="flex justify-between items-center py-4">
                         <div className="flex items-center">
                             <Car className="w-8 h-8 text-blue-600 mr-3" />
-                            <h1 className="text-2xl font-bold text-gray-800">Car Service Manager</h1>
+                            <h1 className="text-2xl font-bold text-gray-800">{t('app_name')}</h1>
                         </div>
 
-                        <div className="hidden md:flex items-center gap-4">
+                        <div className="hidden md:flex items-center gap-3">
+                            <button
+                                onClick={toggleLanguage}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition text-sm font-medium text-gray-600"
+                                title="Switch language"
+                            >
+                                <Globe className="w-4 h-4" />
+                                {lang === 'en' ? 'عربي' : 'EN'}
+                            </button>
                             <button
                                 onClick={toggleTheme}
                                 className="p-2 rounded-lg hover:bg-gray-100 transition"
-                                title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                                title={darkMode ? 'Light mode' : 'Dark mode'}
                             >
                                 {darkMode ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-gray-600" />}
                             </button>
-                            <span className="text-gray-600">Welcome, {user?.name}!</span>
+                            <span className="text-gray-600">{t('welcome')}, {user?.name}!</span>
                             <button
                                 onClick={logout}
                                 className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
                             >
                                 <LogOut className="w-4 h-4" />
-                                Logout
+                                {t('logout')}
                             </button>
                         </div>
 
                         <div className="flex items-center gap-2 md:hidden">
+                            <button onClick={toggleLanguage} className="p-2 text-sm font-medium text-gray-600">
+                                {lang === 'en' ? 'عربي' : 'EN'}
+                            </button>
                             <button onClick={toggleTheme} className="p-2">
                                 {darkMode ? <Sun className="w-5 h-5 text-yellow-500" /> : <Moon className="w-5 h-5 text-gray-600" />}
                             </button>
@@ -98,13 +131,13 @@ const MainLayout = () => {
 
                     {mobileMenuOpen && (
                         <div className="md:hidden py-4 border-t border-gray-200">
-                            <p className="text-gray-600 mb-3">Welcome, {user?.name}!</p>
+                            <p className="text-gray-600 mb-3">{t('welcome')}, {user?.name}!</p>
                             <button
                                 onClick={logout}
                                 className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
                             >
                                 <LogOut className="w-4 h-4" />
-                                Logout
+                                {t('logout')}
                             </button>
                         </div>
                     )}
@@ -113,7 +146,7 @@ const MainLayout = () => {
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="flex gap-4 mb-8 overflow-x-auto pb-2">
-                    {NAV_ITEMS.map(item => (
+                    {navItems.map(item => (
                         <button
                             key={item.key}
                             onClick={() => setActiveView(item.key)}
