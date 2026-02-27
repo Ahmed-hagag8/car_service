@@ -571,7 +571,7 @@ const DashboardView = ({ cars, reminders }) => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className={`text-sm font-medium ${reminder.due_date && getDaysRemaining(reminder.due_date) < 0 ? 'text-red-600' : 'text-gray-700'}`}>
+                  <p className={`text-sm font-medium ${reminder.due_date && getDaysRemaining(reminder.due_date) < 0 ? 'text-red-600' : reminder.due_date && getDaysRemaining(reminder.due_date) <= 7 ? 'text-orange-500' : 'text-green-600'}`}>
                     {reminder.due_date ? formatDaysRemaining(getDaysRemaining(reminder.due_date)) : 'No date set'}
                   </p>
                   <p className="text-xs text-gray-500">
