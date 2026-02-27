@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateReminderRequest;
+use App\Http\Resources\ReminderResource;
 use App\Models\Reminder;
 use Illuminate\Http\Request;
 
@@ -21,16 +22,15 @@ class ReminderController extends Controller
             ->where('status', 'pending')
             ->orderBy('due_date', 'asc');
 
-        // Filter by car
         if ($request->has('car_id') && $request->car_id) {
             $query->where('car_id', $request->car_id);
         }
 
         if ($request->has('no_paginate')) {
-            return response()->json($query->get());
+            return ReminderResource::collection($query->get());
         }
 
-        return response()->json($query->paginate($request->get('per_page', 15)));
+        return ReminderResource::collection($query->paginate($request->get('per_page', 15)));
     }
 
     /**
@@ -47,10 +47,10 @@ class ReminderController extends Controller
             ->orderBy('due_date', 'asc');
 
         if ($request->has('no_paginate')) {
-            return response()->json($query->get());
+            return ReminderResource::collection($query->get());
         }
 
-        return response()->json($query->paginate($request->get('per_page', 15)));
+        return ReminderResource::collection($query->paginate($request->get('per_page', 15)));
     }
 
     /**
@@ -66,7 +66,7 @@ class ReminderController extends Controller
 
         return response()->json([
             'message' => 'Reminder updated successfully',
-            'reminder' => $reminder
+            'reminder' => new ReminderResource($reminder)
         ]);
     }
 }

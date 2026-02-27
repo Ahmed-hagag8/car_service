@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreServiceRecordRequest;
 use App\Http\Requests\UpdateServiceRecordRequest;
+use App\Http\Resources\ServiceRecordResource;
 use App\Models\ServiceRecord;
-use App\Models\Car;
 use App\Models\Reminder;
 use App\Models\ServiceType;
 use Illuminate\Http\Request;
@@ -25,17 +25,14 @@ class ServiceRecordController extends Controller
             $q->where('user_id', $user->id);
         })->with(['car', 'serviceType']);
 
-        // Filter by car
         if ($request->has('car_id') && $request->car_id) {
             $query->where('car_id', $request->car_id);
         }
 
-        // Filter by service type
         if ($request->has('service_type_id') && $request->service_type_id) {
             $query->where('service_type_id', $request->service_type_id);
         }
 
-        // Filter by date range
         if ($request->has('date_from') && $request->date_from) {
             $query->where('service_date', '>=', $request->date_from);
         }
@@ -43,7 +40,6 @@ class ServiceRecordController extends Controller
             $query->where('service_date', '<=', $request->date_to);
         }
 
-        // Search by notes or service provider
         if ($request->has('search') && $request->search) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -54,12 +50,11 @@ class ServiceRecordController extends Controller
 
         $query->latest('service_date');
 
-        // Paginate or return all
         if ($request->has('no_paginate')) {
-            return response()->json($query->get());
+            return ServiceRecordResource::collection($query->get());
         }
 
-        return response()->json($query->paginate($request->get('per_page', 15)));
+        return ServiceRecordResource::collection($query->paginate($request->get('per_page', 15)));
     }
 
     /**
@@ -68,14 +63,9 @@ class ServiceRecordController extends Controller
     public function store(StoreServiceRecordRequest $request)
     {
         $validated = $request->validated();
-
-        // Verify the car belongs to the authenticated user
         $car = $request->user()->cars()->findOrFail($validated['car_id']);
-
-        // Get the service type for logging
         $serviceType = ServiceType::find($validated['service_type_id']);
 
-        // Use the date and mileage entered by the user for the reminder
         $nextDueDate = $validated['service_date'];
         $nextDueMileage = $validated['mileage_at_service'];
 
@@ -88,20 +78,16 @@ class ServiceRecordController extends Controller
         $validated['next_due_date'] = $nextDueDate;
         $validated['next_due_mileage'] = $nextDueMileage;
 
-        // Create the service record
         $serviceRecord = ServiceRecord::create($validated);
-
-        // Update the car's current mileage
         $car->update(['current_mileage' => $validated['mileage_at_service']]);
 
-        // Create or update the reminder using the helper method
         if ($nextDueDate || $nextDueMileage) {
             $this->createOrUpdateReminder($car->id, $validated['service_type_id'], $nextDueDate, $nextDueMileage);
         }
 
         return response()->json([
             'message' => 'Service record added successfully',
-            'service_record' => $serviceRecord->load(['car', 'serviceType'])
+            'service_record' => new ServiceRecordResource($serviceRecord->load(['car', 'serviceType']))
         ], 201);
     }
 
@@ -112,11 +98,9 @@ class ServiceRecordController extends Controller
     {
         $serviceRecord = ServiceRecord::whereHas('car', function ($query) use ($request) {
             $query->where('user_id', $request->user()->id);
-        })
-            ->with(['car', 'serviceType'])
-            ->findOrFail($id);
+        })->with(['car', 'serviceType'])->findOrFail($id);
 
-        return response()->json($serviceRecord);
+        return new ServiceRecordResource($serviceRecord);
     }
 
     /**
@@ -132,7 +116,7 @@ class ServiceRecordController extends Controller
 
         return response()->json([
             'message' => 'Service record updated successfully',
-            'service_record' => $serviceRecord->load(['car', 'serviceType'])
+            'service_record' => new ServiceRecordResource($serviceRecord->load(['car', 'serviceType']))
         ]);
     }
 
@@ -147,9 +131,7 @@ class ServiceRecordController extends Controller
 
         $serviceRecord->delete();
 
-        return response()->json([
-            'message' => 'Service record deleted successfully'
-        ]);
+        return response()->json(['message' => 'Service record deleted successfully']);
     }
 
     /**
@@ -159,17 +141,11 @@ class ServiceRecordController extends Controller
     {
         $car = $request->user()->cars()->findOrFail($carId);
 
-        $services = $car->serviceRecords()
-            ->with('serviceType')
-            ->latest('service_date')
-            ->get();
-
-        return response()->json($services);
+        return ServiceRecordResource::collection(
+            $car->serviceRecords()->with('serviceType')->latest('service_date')->get()
+        );
     }
 
-    /**
-     * Create or update a reminder for a car's service type.
-     */
     private function createOrUpdateReminder($carId, $serviceTypeId, $dueDate, $dueMileage)
     {
         Reminder::where('car_id', $carId)

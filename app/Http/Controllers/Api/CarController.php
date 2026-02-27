@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCarRequest;
 use App\Http\Requests\UpdateCarRequest;
+use App\Http\Resources\CarResource;
 use App\Models\Car;
 use Illuminate\Http\Request;
 
 class CarController extends Controller
 {
     /**
-     * List all cars for the authenticated user with optional search and pagination.
+     * List all cars with optional search and pagination.
      */
     public function index(Request $request)
     {
@@ -32,12 +33,12 @@ class CarController extends Controller
         $sortDir = $request->get('sort_dir', 'desc');
         $query->orderBy($sortBy, $sortDir);
 
-        // Paginate (default 12 per page) or return all if no_paginate is set
+        // Return all or paginated
         if ($request->has('no_paginate')) {
-            return response()->json($query->get());
+            return CarResource::collection($query->get());
         }
 
-        return response()->json($query->paginate($request->get('per_page', 12)));
+        return CarResource::collection($query->paginate($request->get('per_page', 12)));
     }
 
     /**
@@ -49,7 +50,7 @@ class CarController extends Controller
 
         return response()->json([
             'message' => 'Car added successfully',
-            'car' => $car
+            'car' => new CarResource($car)
         ], 201);
     }
 
@@ -60,7 +61,7 @@ class CarController extends Controller
     {
         $car = $request->user()->cars()->with(['serviceRecords.serviceType', 'reminders'])->findOrFail($id);
 
-        return response()->json($car);
+        return new CarResource($car);
     }
 
     /**
@@ -73,7 +74,7 @@ class CarController extends Controller
 
         return response()->json([
             'message' => 'Car updated successfully',
-            'car' => $car
+            'car' => new CarResource($car)
         ]);
     }
 
@@ -101,7 +102,6 @@ class CarController extends Controller
         $serviceCount = $car->serviceRecords->count();
         $averageCost = $serviceCount > 0 ? $totalCost / $serviceCount : 0;
 
-        // Upcoming services
         $upcomingServices = $car->reminders()
             ->where('status', 'pending')
             ->where(function ($query) {
@@ -111,7 +111,6 @@ class CarController extends Controller
             ->with('serviceType')
             ->get();
 
-        // Overdue services
         $overdueServices = $car->reminders()
             ->where('status', 'pending')
             ->where('due_date', '<', now())
@@ -119,7 +118,7 @@ class CarController extends Controller
             ->get();
 
         return response()->json([
-            'car' => $car,
+            'car' => new CarResource($car),
             'statistics' => [
                 'total_cost' => $totalCost,
                 'service_count' => $serviceCount,

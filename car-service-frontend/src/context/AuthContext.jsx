@@ -34,7 +34,8 @@ export const AuthProvider = ({ children }) => {
             });
             if (response.ok) {
                 const data = await response.json();
-                setUser(data);
+                // UserResource wraps in data key
+                setUser(data.data || data);
             }
         } catch (error) {
             console.error('Failed to fetch user:', error);
@@ -102,7 +103,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>
+        <AuthContext.Provider value={{ user, token, login, register, logout, loading, refreshUser: fetchUser }}>
             {children}
         </AuthContext.Provider>
     );
