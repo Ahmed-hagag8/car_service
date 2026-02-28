@@ -125,5 +125,8 @@
     "Battery Check": "Battery Check",
     "AC Service": "AC Service",
     "General Service": "General Service",
-    "Wheel Alignment": "Wheel Alignment"
+    "Wheel Alignment": "Wheel Alignment",
+    "Air Filter": "Air Filter",
+    "Coolant Flush": "Coolant Flush",
+    "Transmission Service": "Transmission Service"
 }

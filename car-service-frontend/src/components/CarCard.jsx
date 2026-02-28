@@ -47,7 +47,7 @@ const CarDetailsModal = ({ car, stats, onClose, onRefresh, onToast }) => {
     return (
         <>
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={onClose}>
-                <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }} onClick={(e) => e.stopPropagation()}>
                     <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
                         <h2 className="text-2xl font-bold text-gray-800">{car.brand} {car.model}</h2>
                         <div className="flex items-center gap-2">
@@ -83,7 +83,7 @@ const CarDetailsModal = ({ car, stats, onClose, onRefresh, onToast }) => {
                             {car.color && (
                                 <div className="bg-gray-50 rounded-lg p-3">
                                     <p className="text-xs text-gray-500">{t('color')}</p>
-                                    <p className="font-semibold text-gray-800">{car.color}</p>
+                                    <p className="font-semibold text-gray-800">{t(car.color) || car.color}</p>
                                 </div>
                             )}
                         </div>
